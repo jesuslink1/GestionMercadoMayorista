@@ -1,6 +1,7 @@
 package com.sise.GestionMercadoMayorista.service;
 
 import com.sise.GestionMercadoMayorista.dto.stand.CambiarEstadoUsuarioRequest;
+import com.sise.GestionMercadoMayorista.dto.usuario.RegistroClienteRequest;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioRequestDto;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioResponseDto;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioUpdateRequest;
@@ -20,4 +21,6 @@ public interface UsuarioService {
     void cambiarEstado(Integer idUsuario, CambiarEstadoUsuarioRequest request);
 
     void eliminarLogico(Integer idUsuario);
+
+    UsuarioResponseDto registrarClientePublico(RegistroClienteRequest request);
 }

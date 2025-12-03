@@ -10,7 +10,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -53,6 +52,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
     }
 
+    // 2.b) RecursoNoEncontradoException → 404
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ResponseEntity<ApiError> handleRecursoNoEncontrado(
+            RecursoNoEncontradoException ex,
+            HttpServletRequest request
+    ) {
+        ApiError apiError = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
     // 3) IllegalArgumentException → usas mucho en tus servicios (stands, usuarios, etc.)
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(
@@ -69,25 +84,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiError); // 400
     }
 
-    // 4) Catch-all genérico (último recurso)
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGeneral(
-            Exception ex,
+    // 3.b) ReglaNegocioException → 400
+    @ExceptionHandler(ReglaNegocioException.class)
+    public ResponseEntity<ApiError> handleReglaNegocio(
+            ReglaNegocioException ex,
             HttpServletRequest request
     ) {
         ApiError apiError = new ApiError(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Ocurrió un error interno en el servidor",
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ex.getMessage(),
                 request.getRequestURI()
         );
 
-        // Aquí podrías loguear ex.printStackTrace() o usar un logger
-        ex.printStackTrace();
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
     }
 
+    // 4) Credenciales inválidas (login)
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> handleBadCredentials(
             BadCredentialsException ex,
@@ -103,4 +116,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiError);
     }
 
+    // 5) Catch-all genérico (último recurso)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleGeneral(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        ApiError apiError = new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                "Ocurrió un error interno en el servidor",
+                request.getRequestURI()
+        );
+
+        ex.printStackTrace(); // para debug
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiError);
+    }
 }

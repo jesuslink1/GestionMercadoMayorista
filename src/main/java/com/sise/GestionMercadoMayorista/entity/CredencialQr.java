@@ -14,9 +14,8 @@ public class CredencialQr {
     @Column(name = "id_credencial")
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario", nullable = false)
-    private Usuario usuario;
+    @Column(name = "id_usuario", nullable = false)
+    private Integer idUsuario;
 
     @Column(name = "codigo_qr", length = 255, nullable = false)
     private String codigoQr;
@@ -72,20 +71,20 @@ public class CredencialQr {
         this.id = id;
     }
 
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
     public String getCodigoQr() {
         return codigoQr;
     }
 
     public void setCodigoQr(String codigoQr) {
         this.codigoQr = codigoQr;
+    }
+
+    public Integer getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(Integer idUsuario) {
+        this.idUsuario = idUsuario;
     }
 
     public String getTipoCredencial() {

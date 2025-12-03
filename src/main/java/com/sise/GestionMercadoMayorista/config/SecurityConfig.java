@@ -55,11 +55,21 @@ public class SecurityConfig {
                                 "/api/public/**"
                         ).permitAll()
 
+                        // Zona ADMIN ya existente
                         .requestMatchers("/api/v1/admin/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR")
 
+                        // Stands ya existente
                         .requestMatchers("/api/v1/stands/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR", "SOCIO")
+
+                        // SOCIO ve su credencial QR
+                        .requestMatchers("/api/v1/socio/credencial-qr/**")
+                        .hasRole("SOCIO")
+
+                        // Validación de QR (personal de seguridad / admin / supervisor)
+                        .requestMatchers("/api/v1/credenciales/validar/**")
+                        .hasAnyRole("ADMIN", "SUPERVISOR")
 
                         .anyRequest().authenticated()
                 )

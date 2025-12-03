@@ -1,6 +1,7 @@
 package com.sise.GestionMercadoMayorista.service.impl;
 
 import com.sise.GestionMercadoMayorista.dto.stand.CambiarEstadoUsuarioRequest;
+import com.sise.GestionMercadoMayorista.dto.usuario.RegistroClienteRequest;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioRequestDto;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioResponseDto;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioUpdateRequest;
@@ -148,5 +149,40 @@ public class UsuarioServiceImpl implements UsuarioService {
             dto.setCreatedAt(usuario.getCreatedAt());
         }
         return dto;
+    }
+
+    @Override
+    public UsuarioResponseDto registrarClientePublico(RegistroClienteRequest request) {
+
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("El email es obligatorio");
+        }
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres");
+        }
+
+        // Validar que no exista otro usuario con el mismo email
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Ya existe un usuario registrado con ese email");
+        }
+
+        // Buscar rol CLIENTE
+        Rol rolCliente = rolRepository.findByNombreRolIgnoreCase("CLIENTE")
+                .orElseThrow(() -> new RuntimeException("No se encontró el rol CLIENTE"));
+
+        Usuario usuario = new Usuario();
+        usuario.setRol(rolCliente);
+        usuario.setEmail(request.getEmail());
+        usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        usuario.setTelefono(request.getTelefono());
+        usuario.setNombres(request.getNombres());
+        usuario.setApellidos(request.getApellidos());
+        usuario.setEstado("ACTIVO");
+        usuario.setEstadoRegistro(1);
+        usuario.setCreatedAt(LocalDateTime.now());
+        usuario.setUpdatedAt(LocalDateTime.now());
+
+        Usuario guardado = usuarioRepository.save(usuario);
+        return mapToResponse(guardado); // reutilizamos tu mismo mapper
     }
 }

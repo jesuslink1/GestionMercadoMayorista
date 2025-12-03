@@ -12,6 +12,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     Optional<Usuario> findByEmail(String email);
 
+    boolean existsByEmail(String email);
+
     @Query("SELECT u FROM Usuario u " +
             "WHERE (:rolNombre IS NULL OR u.rol.nombreRol = :rolNombre) " +
             "AND (:estado IS NULL OR u.estado = :estado) " +
