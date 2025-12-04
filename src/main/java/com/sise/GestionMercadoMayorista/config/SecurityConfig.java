@@ -52,7 +52,15 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/ping",
                                 "/api/auth/login",
-                                "/api/public/**"
+                                "/api/public/**",
+                                "/error"
+                        ).permitAll()
+
+                        // SWAGGER / OPENAPI PÚBLICO
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**"
                         ).permitAll()
 
                         // Zona ADMIN ya existente
@@ -81,8 +89,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        // En tu versión, DaoAuthenticationProvider recibe el UserDetailsService por constructor
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }

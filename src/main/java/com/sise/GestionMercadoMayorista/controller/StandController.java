@@ -5,6 +5,7 @@ import com.sise.GestionMercadoMayorista.dto.stand.StandRequestDto;
 import com.sise.GestionMercadoMayorista.dto.stand.StandResponseDto;
 import com.sise.GestionMercadoMayorista.security.CustomUserDetails;
 import com.sise.GestionMercadoMayorista.service.StandService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/stands")
 public class StandController {

@@ -4,6 +4,8 @@ import com.sise.GestionMercadoMayorista.dto.calificacion.*;
 import com.sise.GestionMercadoMayorista.entity.Calificacion;
 import com.sise.GestionMercadoMayorista.entity.Stand;
 import com.sise.GestionMercadoMayorista.entity.Usuario;
+import com.sise.GestionMercadoMayorista.exception.RecursoNoEncontradoException;
+import com.sise.GestionMercadoMayorista.exception.ReglaNegocioException;
 import com.sise.GestionMercadoMayorista.repository.CalificacionRepository;
 import com.sise.GestionMercadoMayorista.repository.StandRepository;
 import com.sise.GestionMercadoMayorista.repository.UsuarioRepository;
@@ -44,15 +46,19 @@ public class CalificacionServiceImpl implements CalificacionService {
     @Override
     public CalificacionResponseDto registrarCalificacion(CalificacionCrearRequestDto dto) {
         if (dto.getIdStand() == null) {
-            throw new IllegalArgumentException("Debe indicar el stand.");
+            throw new ReglaNegocioException("Debe indicar el stand a calificar.");
         }
         if (dto.getPuntuacion() == null ||
                 dto.getPuntuacion() < 1 || dto.getPuntuacion() > 5) {
-            throw new IllegalArgumentException("La puntuación debe estar entre 1 y 5.");
+            throw new ReglaNegocioException("La puntuación debe estar entre 1 y 5.");
         }
 
         Stand stand = standRepository.findById(dto.getIdStand())
-                .orElseThrow(() -> new IllegalArgumentException("Stand no encontrado."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Stand no encontrado."));
+
+        if (stand.getEstadoRegistro() != null && stand.getEstadoRegistro() == 0) {
+            throw new ReglaNegocioException("No se pueden registrar calificaciones sobre un stand eliminado.");
+        }
 
         Calificacion c = new Calificacion();
         c.setStand(stand);
@@ -66,6 +72,10 @@ public class CalificacionServiceImpl implements CalificacionService {
             c.setCliente(cliente);
             c.setOrigen("REGISTRADO");
         } else {
+            // Validar datos mínimos de anónimo
+            if (dto.getNombreAnonimo() == null || dto.getNombreAnonimo().isBlank()) {
+                throw new ReglaNegocioException("Para calificaciones anónimas, el nombre es obligatorio.");
+            }
             c.setNombreAnonimo(dto.getNombreAnonimo());
             c.setTelefonoAnonimo(dto.getTelefonoAnonimo());
             c.setEmailAnonimo(dto.getEmailAnonimo());
@@ -79,14 +89,18 @@ public class CalificacionServiceImpl implements CalificacionService {
     @Override
     public PromedioCalificacionDto obtenerPromedioPorStand(Integer idStand) {
         Stand stand = standRepository.findById(idStand)
-                .orElseThrow(() -> new IllegalArgumentException("Stand no encontrado."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Stand no encontrado."));
 
         Object result = calificacionRepository.obtenerPromedioYConteoPorStand(idStand);
 
-        Object[] row = (Object[]) result;
+        double promedio = 0.0;
+        long total = 0L;
 
-        double promedio = row[0] != null ? ((Number) row[0]).doubleValue() : 0.0;
-        long total = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+        if (result != null) {
+            Object[] row = (Object[]) result;
+            promedio = row[0] != null ? ((Number) row[0]).doubleValue() : 0.0;
+            total = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+        }
 
         PromedioCalificacionDto dto = new PromedioCalificacionDto();
         dto.setIdStand(stand.getId());
@@ -99,6 +113,10 @@ public class CalificacionServiceImpl implements CalificacionService {
 
     @Override
     public Page<CalificacionResponseDto> listarComentariosPorStand(Integer idStand, int page, int size) {
+        // Validar que el stand exista
+        standRepository.findById(idStand)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Stand no encontrado."));
+
         Pageable pageable = PageRequest.of(page, size);
         Page<Calificacion> pageCal = calificacionRepository
                 .findByStandIdAndEstadoRegistroOrderByFechaDesc(idStand, 1, pageable);

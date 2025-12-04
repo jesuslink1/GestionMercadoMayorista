@@ -5,6 +5,7 @@ import com.sise.GestionMercadoMayorista.dto.producto.ProductoResponseDto;
 import com.sise.GestionMercadoMayorista.entity.CategoriaProducto;
 import com.sise.GestionMercadoMayorista.entity.Producto;
 import com.sise.GestionMercadoMayorista.entity.Stand;
+import com.sise.GestionMercadoMayorista.exception.ReglaNegocioException;
 import com.sise.GestionMercadoMayorista.repository.CategoriaProductoRepository;
 import com.sise.GestionMercadoMayorista.repository.ProductoRepository;
 import com.sise.GestionMercadoMayorista.repository.StandRepository;
@@ -76,11 +77,8 @@ public class ProductoServiceImpl implements ProductoService {
         Producto producto = productoRepository.findById(idProducto)
                 .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado."));
 
-        // Verificar que el producto pertenece a un stand del socio
-        if (!esAdminOSupervisor(auth)) {
-            if (!producto.getStand().getPropietario().getEmail().equals(email)) {
-                throw new IllegalArgumentException("No tienes permisos para editar este producto.");
-            }
+        if (producto.getEstadoRegistro() != null && producto.getEstadoRegistro() == 0) {
+            throw new ReglaNegocioException("No se puede actualizar un producto eliminado lógicamente.");
         }
 
         CategoriaProducto categoria = categoriaProductoRepository
@@ -113,10 +111,14 @@ public class ProductoServiceImpl implements ProductoService {
         Producto producto = productoRepository.findById(idProducto)
                 .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado."));
 
+        if (producto.getEstadoRegistro() != null && producto.getEstadoRegistro() == 0) {
+            throw new ReglaNegocioException("No se puede cambiar la visibilidad de un producto eliminado lógicamente.");
+        }
+
         // Si no es ADMIN ni SUPERVISOR, validar que sea dueño del stand
         if (!esAdminOSupervisor(auth)) {
             if (!producto.getStand().getPropietario().getEmail().equals(email)) {
-                throw new IllegalArgumentException("No tienes permisos para modificar este producto.");
+                throw new ReglaNegocioException("No tienes permisos para modificar este producto.");
             }
         }
 
@@ -132,10 +134,9 @@ public class ProductoServiceImpl implements ProductoService {
         Producto producto = productoRepository.findById(idProducto)
                 .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado."));
 
-        // Si no es ADMIN ni SUPERVISOR, validar que sea dueño
         if (!esAdminOSupervisor(auth)) {
             if (!producto.getStand().getPropietario().getEmail().equals(email)) {
-                throw new IllegalArgumentException("No tienes permisos para eliminar este producto.");
+                throw new ReglaNegocioException("No tienes permisos para eliminar este producto.");
             }
         }
 
@@ -234,10 +235,13 @@ public class ProductoServiceImpl implements ProductoService {
         }
         if (Boolean.TRUE.equals(enOferta)) {
             if (precioOferta == null) {
-                throw new IllegalArgumentException("Si el producto está en oferta, debes indicar un precio de oferta.");
+                throw new ReglaNegocioException("Si el producto está en oferta, debes indicar un precio de oferta.");
             }
-            if (precioOferta.compareTo(precioActual) > 0) {
-                throw new IllegalArgumentException("El precio de oferta no puede ser mayor al precio actual.");
+            if (precioOferta.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ReglaNegocioException("El precio de oferta debe ser mayor a 0.");
+            }
+            if (precioOferta.compareTo(precioActual) >= 0) {
+                throw new ReglaNegocioException("El precio de oferta debe ser menor al precio actual.");
             }
         }
     }

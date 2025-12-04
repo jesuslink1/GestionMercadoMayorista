@@ -4,6 +4,8 @@ import com.sise.GestionMercadoMayorista.dto.incidencia.*;
 import com.sise.GestionMercadoMayorista.entity.Incidencia;
 import com.sise.GestionMercadoMayorista.entity.Stand;
 import com.sise.GestionMercadoMayorista.entity.Usuario;
+import com.sise.GestionMercadoMayorista.exception.RecursoNoEncontradoException;
+import com.sise.GestionMercadoMayorista.exception.ReglaNegocioException;
 import com.sise.GestionMercadoMayorista.repository.IncidenciaRepository;
 import com.sise.GestionMercadoMayorista.repository.StandRepository;
 import com.sise.GestionMercadoMayorista.repository.UsuarioRepository;
@@ -48,7 +50,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     private Usuario getUsuarioActual() {
         String email = getEmailActual();
         return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario autenticado no encontrado."));
     }
 
     // ================= SOCIO =================
@@ -58,7 +60,17 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         Usuario reportante = getUsuarioActual();
 
         Stand stand = standRepository.findById(dto.getIdStand())
-                .orElseThrow(() -> new IllegalArgumentException("Stand no encontrado."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Stand no encontrado con id: " + dto.getIdStand()));
+
+        if (stand.getEstadoRegistro() != null && stand.getEstadoRegistro() == 0) {
+            throw new ReglaNegocioException("No se pueden registrar incidencias sobre un stand eliminado lógicamente.");
+        }
+
+        // Validar que el stand pertenece al socio logueado
+        if (stand.getPropietario() == null ||
+                !Objects.equals(stand.getPropietario().getId(), reportante.getId())) {
+            throw new ReglaNegocioException("El stand no pertenece al socio autenticado.");
+        }
 
         Incidencia i = new Incidencia();
         i.setStand(stand);
@@ -109,10 +121,10 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Override
     public IncidenciaResponseDto asignarResponsable(Integer idIncidencia, Integer idResponsable) {
         Incidencia i = incidenciaRepository.findById(idIncidencia)
-                .orElseThrow(() -> new IllegalArgumentException("Incidencia no encontrada."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Incidencia no encontrada con id: " + idIncidencia));
 
         Usuario responsable = usuarioRepository.findById(idResponsable)
-                .orElseThrow(() -> new IllegalArgumentException("Responsable no encontrado."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Responsable no encontrado con id: " + idResponsable));
 
         i.setResponsable(responsable);
         Incidencia guardada = incidenciaRepository.save(i);
@@ -122,14 +134,20 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Override
     public IncidenciaResponseDto cambiarEstado(Integer idIncidencia, String nuevoEstado) {
         Incidencia i = incidenciaRepository.findById(idIncidencia)
-                .orElseThrow(() -> new IllegalArgumentException("Incidencia no encontrada."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Incidencia no encontrada con id: " + idIncidencia));
 
-        validarTransicionEstado(i.getEstado(), nuevoEstado);
+        if (nuevoEstado == null || nuevoEstado.isBlank()) {
+            throw new ReglaNegocioException("El nuevo estado es obligatorio.");
+        }
 
-        i.setEstado(nuevoEstado);
+        String estadoNormalizado = nuevoEstado.toUpperCase();
+
+        validarTransicionEstado(i.getEstado(), estadoNormalizado);
+
+        i.setEstado(estadoNormalizado);
 
         // Si pasa a RESUELTA o CERRADA, registramos fecha_cierre
-        if ("RESUELTA".equalsIgnoreCase(nuevoEstado) || "CERRADA".equalsIgnoreCase(nuevoEstado)) {
+        if ("RESUELTA".equalsIgnoreCase(estadoNormalizado) || "CERRADA".equalsIgnoreCase(estadoNormalizado)) {
             i.setFechaCierre(LocalDateTime.now());
         }
 
@@ -138,23 +156,27 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     }
 
     private void validarTransicionEstado(String actual, String nuevo) {
-        if (actual == null) actual = "ABIERTA";
+        if (actual == null || actual.isBlank()) {
+            actual = "ABIERTA";
+        }
 
-        // reglas simples:
-        // ABIERTA -> EN_PROCESO / CERRADA (si la cierran sin trabajar)
-        // EN_PROCESO -> RESUELTA / CERRADA
-        // RESUELTA -> CERRADA
-        // CERRADA -> no se cambia
-        if ("CERRADA".equalsIgnoreCase(actual)) {
-            throw new IllegalArgumentException("La incidencia ya está cerrada.");
+        String act = actual.toUpperCase();
+        String nue = nuevo.toUpperCase();
+
+        // Estados permitidos
+        var estadosPermitidos = Set.of("ABIERTA", "EN_PROCESO", "RESUELTA", "CERRADA");
+        if (!estadosPermitidos.contains(nue)) {
+            throw new ReglaNegocioException("Estado inválido. Valores permitidos: " + estadosPermitidos);
+        }
+
+        // CERRADA no se puede mover a ningún otro
+        if ("CERRADA".equals(act)) {
+            throw new ReglaNegocioException("La incidencia ya está cerrada y no puede reabrirse.");
         }
 
         Set<String> permitidosDesdeAbierta = Set.of("EN_PROCESO", "CERRADA");
         Set<String> permitidosDesdeEnProceso = Set.of("RESUELTA", "CERRADA");
         Set<String> permitidosDesdeResuelta = Set.of("CERRADA");
-
-        String act = actual.toUpperCase();
-        String nue = nuevo.toUpperCase();
 
         boolean ok;
         switch (act) {
@@ -165,8 +187,8 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         }
 
         if (!ok) {
-            throw new IllegalArgumentException(
-                    "Transición de estado no válida: " + actual + " -> " + nuevo
+            throw new ReglaNegocioException(
+                    "Transición de estado no válida: " + act + " -> " + nue
             );
         }
     }

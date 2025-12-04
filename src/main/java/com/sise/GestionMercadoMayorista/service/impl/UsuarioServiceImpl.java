@@ -7,6 +7,7 @@ import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioResponseDto;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioUpdateRequest;
 import com.sise.GestionMercadoMayorista.entity.Rol;
 import com.sise.GestionMercadoMayorista.entity.Usuario;
+import com.sise.GestionMercadoMayorista.exception.RecursoNoEncontradoException;
 import com.sise.GestionMercadoMayorista.repository.RolRepository;
 import com.sise.GestionMercadoMayorista.repository.UsuarioRepository;
 import com.sise.GestionMercadoMayorista.service.UsuarioService;
@@ -15,8 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sise.GestionMercadoMayorista.mapper.UsuarioMapper;
-
-
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -58,9 +57,31 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public UsuarioResponseDto crearUsuario(UsuarioRequestDto request) {
+
+        // 🔹 VALIDACIONES BÁSICAS (email / password)
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("El email es obligatorio");
+        }
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres");
+        }
+
+        // 🔹 VALIDAR UNICIDAD DE EMAIL
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Ya existe un usuario con el email especificado.");
+        }
+
+        // 🔹 VALIDAR UNICIDAD DE DNI (si viene informado)
+        if (request.getDni() != null && !request.getDni().isBlank()
+                && usuarioRepository.existsByDni(request.getDni())) {
+            throw new IllegalArgumentException("Ya existe un usuario con el DNI especificado.");
+        }
+
+        // 🔹 Recuperar rol
         Rol rol = rolRepository.findById(request.getIdRol())
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + request.getIdRol()));
 
+        // 🔹 Construir entidad Usuario
         Usuario usuario = new Usuario();
         usuario.setRol(rol);
         usuario.setEmail(request.getEmail());
@@ -73,6 +94,8 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.setRazonSocial(request.getRazonSocial());
         usuario.setEstado("ACTIVO");
         usuario.setEstadoRegistro(1);
+
+        // createdAt / updatedAt los maneja @PrePersist en la entidad (no pasa nada si no los seteas aquí)
 
         Usuario guardado = usuarioRepository.save(usuario);
         return mapToResponse(guardado);
@@ -108,7 +131,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public void cambiarEstado(Integer idUsuario, CambiarEstadoUsuarioRequest request) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + idUsuario));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con id: " + idUsuario));
 
         String nuevoEstado = request.getEstado();
 
@@ -116,9 +139,17 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new IllegalArgumentException("El estado no puede ser nulo o vacío");
         }
 
-        // Normalizamos a MAYÚSCULAS: ACTIVO / SUSPENDIDO / BAJA
-        usuario.setEstado(nuevoEstado.toUpperCase());
+        String estadoUpper = nuevoEstado.toUpperCase();
 
+        // Validar valores permitidos
+        if (!estadoUpper.equals("ACTIVO") &&
+                !estadoUpper.equals("SUSPENDIDO") &&
+                !estadoUpper.equals("BAJA")) {
+
+            throw new IllegalArgumentException("Estado inválido. Valores permitidos: ACTIVO, SUSPENDIDO, BAJA.");
+        }
+
+        usuario.setEstado(estadoUpper);
         usuario.setUpdatedAt(LocalDateTime.now());
 
         usuarioRepository.save(usuario);

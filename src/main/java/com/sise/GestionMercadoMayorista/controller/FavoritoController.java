@@ -2,6 +2,7 @@ package com.sise.GestionMercadoMayorista.controller;
 
 import com.sise.GestionMercadoMayorista.dto.favorito.FavoritoResponseDto;
 import com.sise.GestionMercadoMayorista.service.FavoritoService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/cliente/favoritos")
+@SecurityRequirement(name = "bearerAuth")
 public class FavoritoController {
 
     private final FavoritoService favoritoService;

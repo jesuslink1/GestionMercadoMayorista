@@ -5,12 +5,14 @@ import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioRequestDto;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioResponseDto;
 import com.sise.GestionMercadoMayorista.dto.usuario.UsuarioUpdateRequest;
 import com.sise.GestionMercadoMayorista.service.UsuarioService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/admin/usuarios")
 public class UsuarioController {

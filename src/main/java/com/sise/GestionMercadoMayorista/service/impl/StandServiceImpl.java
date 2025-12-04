@@ -5,6 +5,8 @@ import com.sise.GestionMercadoMayorista.dto.stand.StandResponseDto;
 import com.sise.GestionMercadoMayorista.entity.CategoriaStand;
 import com.sise.GestionMercadoMayorista.entity.Stand;
 import com.sise.GestionMercadoMayorista.entity.Usuario;
+import com.sise.GestionMercadoMayorista.exception.RecursoNoEncontradoException;
+import com.sise.GestionMercadoMayorista.exception.ReglaNegocioException;
 import com.sise.GestionMercadoMayorista.repository.CategoriaStandRepository;
 import com.sise.GestionMercadoMayorista.repository.StandRepository;
 import com.sise.GestionMercadoMayorista.repository.UsuarioRepository;
@@ -90,12 +92,34 @@ public class StandServiceImpl implements StandService {
     // Crear
     @Override
     public StandResponseDto crear(StandRequestDto request) {
+
+        // 1) Validar datos obligatorios
+        if (request.getBloque() == null || request.getBloque().isBlank()) {
+            throw new IllegalArgumentException("El bloque del stand es obligatorio.");
+        }
+        if (request.getNumeroStand() == null || request.getNumeroStand().isBlank()) {
+            throw new IllegalArgumentException("El número de stand es obligatorio.");
+        }
+
+        // 2) Validar que no exista otro stand activo con mismo bloque+número
+        boolean existe = standRepository.existsByBloqueAndNumeroStandAndEstadoRegistro(
+                request.getBloque(),
+                request.getNumeroStand(),
+                1
+        );
+        if (existe) {
+            throw new ReglaNegocioException(
+                    "Ya existe un stand activo en el bloque " +
+                            request.getBloque() + " con número " + request.getNumeroStand() + "."
+            );
+        }
+
         Stand stand = new Stand();
 
         // Propietario (puede ser opcional)
         if (request.getIdPropietario() != null) {
             Usuario propietario = usuarioRepository.findById(request.getIdPropietario())
-                    .orElseThrow(() -> new IllegalArgumentException(
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
                             "Propietario no encontrado con id: " + request.getIdPropietario()));
             stand.setPropietario(propietario);
         }
@@ -103,7 +127,7 @@ public class StandServiceImpl implements StandService {
         // Categoría stand
         if (request.getIdCategoriaStand() != null) {
             CategoriaStand categoriaStand = categoriaStandRepository.findById(request.getIdCategoriaStand())
-                    .orElseThrow(() -> new IllegalArgumentException(
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
                             "Categoría de stand no encontrada con id: " + request.getIdCategoriaStand()));
             stand.setCategoriaStand(categoriaStand);
         }
@@ -127,24 +151,52 @@ public class StandServiceImpl implements StandService {
     @Override
     public StandResponseDto actualizar(Integer id, StandRequestDto request) {
         Stand stand = standRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Stand no encontrado con id: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Stand no encontrado con id: " + id));
 
         if (stand.getEstadoRegistro() != null && stand.getEstadoRegistro() == 0) {
-            throw new IllegalArgumentException("No se puede actualizar un stand eliminado lógicamente");
+            throw new ReglaNegocioException("No se puede actualizar un stand eliminado lógicamente");
         }
 
+        // Datos nuevos
+        String nuevoBloque = request.getBloque();
+        String nuevoNumero = request.getNumeroStand();
+
+        // Si no mandan bloque/número, conserva el actual
+        if (nuevoBloque == null || nuevoBloque.isBlank()) {
+            nuevoBloque = stand.getBloque();
+        }
+        if (nuevoNumero == null || nuevoNumero.isBlank()) {
+            nuevoNumero = stand.getNumeroStand();
+        }
+
+        // Validar unicidad bloque+numero entre stands activos, excluyendo el propio
+        boolean existe = standRepository.existsByBloqueAndNumeroStandAndEstadoRegistroAndIdNot(
+                nuevoBloque,
+                nuevoNumero,
+                1,
+                id
+        );
+        if (existe) {
+            throw new ReglaNegocioException(
+                    "Ya existe otro stand activo en el bloque " +
+                            nuevoBloque + " con número " + nuevoNumero + "."
+            );
+        }
+
+        // Propietario
         if (request.getIdPropietario() != null) {
-            Optional<Usuario> propietarioOpt = usuarioRepository.findById(request.getIdPropietario());
-            propietarioOpt.ifPresent(stand::setPropietario);
+            usuarioRepository.findById(request.getIdPropietario())
+                    .ifPresent(stand::setPropietario);
         }
 
+        // Categoría
         if (request.getIdCategoriaStand() != null) {
-            Optional<CategoriaStand> catOpt = categoriaStandRepository.findById(request.getIdCategoriaStand());
-            catOpt.ifPresent(stand::setCategoriaStand);
+            categoriaStandRepository.findById(request.getIdCategoriaStand())
+                    .ifPresent(stand::setCategoriaStand);
         }
 
-        stand.setBloque(request.getBloque());
-        stand.setNumeroStand(request.getNumeroStand());
+        stand.setBloque(nuevoBloque);
+        stand.setNumeroStand(nuevoNumero);
         stand.setNombreComercial(request.getNombreComercial());
         stand.setDescripcionNegocio(request.getDescripcionNegocio());
         stand.setLatitud(request.getLatitud());
@@ -157,17 +209,23 @@ public class StandServiceImpl implements StandService {
     @Override
     public void cambiarEstado(Integer id, String nuevoEstado) {
         Stand stand = standRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Stand no encontrado con id: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Stand no encontrado con id: " + id));
 
         if (stand.getEstadoRegistro() != null && stand.getEstadoRegistro() == 0) {
-            throw new IllegalArgumentException("No se puede cambiar estado de un stand eliminado lógicamente");
+            throw new ReglaNegocioException("No se puede cambiar estado de un stand eliminado lógicamente");
         }
 
         if (nuevoEstado == null || nuevoEstado.isBlank()) {
             throw new IllegalArgumentException("Estado no puede ser vacío");
         }
 
-        stand.setEstado(nuevoEstado.toUpperCase(Locale.ROOT));
+        String estadoUpper = nuevoEstado.toUpperCase(Locale.ROOT);
+
+        if (!estadoUpper.equals("ABIERTO") && !estadoUpper.equals("CERRADO")) {
+            throw new ReglaNegocioException("Estado inválido. Valores permitidos: ABIERTO, CERRADO.");
+        }
+
+        stand.setEstado(estadoUpper);
         standRepository.save(stand);
     }
 

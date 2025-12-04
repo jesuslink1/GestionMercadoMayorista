@@ -2,12 +2,14 @@ package com.sise.GestionMercadoMayorista.controller;
 
 import com.sise.GestionMercadoMayorista.dto.calificacion.*;
 import com.sise.GestionMercadoMayorista.service.CalificacionService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/public/calificaciones")
+@SecurityRequirement(name = "bearerAuth")
 public class CalificacionController {
 
     private final CalificacionService calificacionService;

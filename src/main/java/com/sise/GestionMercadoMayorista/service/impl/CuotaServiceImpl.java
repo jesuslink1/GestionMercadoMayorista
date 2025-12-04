@@ -10,6 +10,8 @@ import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.sise.GestionMercadoMayorista.exception.ReglaNegocioException;
+import com.sise.GestionMercadoMayorista.exception.RecursoNoEncontradoException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -47,13 +49,25 @@ public class CuotaServiceImpl implements CuotaService {
     @Override
     public CuotaResponseDto generarCuotaParaStand(Integer idStand, CuotaRequestDto dto) {
         Stand stand = standRepository.findById(idStand)
-                .orElseThrow(() -> new IllegalArgumentException("Stand no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Stand no encontrado con id: " + idStand));
+
+        if (stand.getEstadoRegistro() != null && stand.getEstadoRegistro() == 0) {
+            throw new ReglaNegocioException("No se pueden generar cuotas para un stand eliminado lógicamente.");
+        }
+
+        if (dto.getPeriodo() == null || dto.getPeriodo().isBlank()) {
+            throw new ReglaNegocioException("El periodo de la cuota es obligatorio.");
+        }
+
+        if (dto.getMontoCuota() == null || dto.getMontoCuota().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ReglaNegocioException("El monto de la cuota debe ser mayor a 0.");
+        }
 
         // Validar duplicado
         CuotaPago existente = cuotaPagoRepository
                 .findByStandIdAndPeriodoAndEstadoRegistro(idStand, dto.getPeriodo(), 1);
         if (existente != null) {
-            throw new IllegalArgumentException("Ya existe una cuota para este stand y periodo.");
+            throw new ReglaNegocioException("Ya existe una cuota para este stand y periodo.");
         }
 
         CuotaPago cuota = new CuotaPago();
@@ -77,6 +91,10 @@ public class CuotaServiceImpl implements CuotaService {
 
     @Override
     public void generarCuotasMasivo(CuotaMasivaRequestDto dto) {
+
+        if (dto.getMontoCuota() == null || dto.getMontoCuota().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ReglaNegocioException("El monto de la cuota debe ser mayor a 0.");
+        }
 
         List<Stand> stands = obtenerStandsParaCuotaMasiva(
                 dto.getBloque(),
@@ -127,19 +145,30 @@ public class CuotaServiceImpl implements CuotaService {
     @Override
     public CuotaResponseDto registrarPago(Integer idCuota, PagoCuotaRequestDto dto, String emailUsuario) {
         CuotaPago cuota = cuotaPagoRepository.findById(idCuota)
-                .orElseThrow(() -> new IllegalArgumentException("Cuota no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cuota no encontrada con id: " + idCuota));
+
+        if (cuota.getEstadoRegistro() != null && cuota.getEstadoRegistro() == 0) {
+            throw new ReglaNegocioException("No se pueden registrar pagos sobre una cuota eliminada lógicamente.");
+        }
 
         BigDecimal monto = dto.getMontoPagado();
         if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("El monto del pago debe ser mayor a 0");
+            throw new ReglaNegocioException("El monto del pago debe ser mayor a 0.");
         }
 
-        // 1) Bloquear si ya está pagada
+        // Bloquear si ya está pagada
         if ("PAGADO".equalsIgnoreCase(cuota.getEstado())) {
-            throw new IllegalArgumentException("La cuota ya está pagada; no se pueden registrar más pagos.");
+            throw new ReglaNegocioException("La cuota ya está pagada; no se pueden registrar más pagos.");
         }
 
-        // 2) Aplicar pago con validación de sobrepago
+        // Validar que no se pague más que el saldo pendiente
+        BigDecimal pagadoActual = cuota.getMontoPagado() != null ? cuota.getMontoPagado() : BigDecimal.ZERO;
+        BigDecimal saldo = cuota.getMontoCuota().subtract(pagadoActual);
+        if (monto.compareTo(saldo) > 0) {
+            throw new ReglaNegocioException("El pago excede el saldo pendiente. Saldo actual: " + saldo);
+        }
+
+        // Aplicar pago (ya sin sobrepago)
         aplicarPago(cuota, monto);
 
         LocalDate fechaPago = (dto.getFechaPago() != null)
@@ -163,7 +192,7 @@ public class CuotaServiceImpl implements CuotaService {
         BigDecimal nuevoPagado = cuota.getMontoPagado().add(montoPago);
         cuota.setMontoPagado(nuevoPagado);
 
-        if (nuevoPagado.compareTo(cuota.getMontoCuota()) >= 0) {
+        if (nuevoPagado.compareTo(cuota.getMontoCuota()) == 0) {
             cuota.setEstado("PAGADO");
         } else if (nuevoPagado.compareTo(BigDecimal.ZERO) > 0) {
             cuota.setEstado("PARCIAL");

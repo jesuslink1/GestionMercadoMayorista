@@ -30,4 +30,19 @@ public interface StandRepository extends JpaRepository<Stand, Integer> {
     Optional<Stand> findByIdAndPropietarioEmailAndEstadoRegistro(Integer id,
                                                                  String email,
                                                                  Integer estadoRegistro);
+
+    // Para validar unicidad al crear (solo activos)
+    boolean existsByBloqueAndNumeroStandAndEstadoRegistro(
+            String bloque,
+            String numeroStand,
+            Integer estadoRegistro
+    );
+
+    // Para validar unicidad al actualizar (excluyendo el propio stand)
+    boolean existsByBloqueAndNumeroStandAndEstadoRegistroAndIdNot(
+            String bloque,
+            String numeroStand,
+            Integer estadoRegistro,
+            Integer id
+    );
 }
