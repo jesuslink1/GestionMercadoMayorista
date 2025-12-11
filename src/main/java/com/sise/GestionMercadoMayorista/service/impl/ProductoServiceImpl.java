@@ -170,7 +170,7 @@ public class ProductoServiceImpl implements ProductoService {
             Boolean visible,
             Integer estadoRegistro
     ) {
-        // Normalizar el parámetro nombre en Java
+        // Normalizar nombre
         String patronNombre = null;
         if (nombre != null) {
             nombre = nombre.trim();
@@ -179,12 +179,15 @@ public class ProductoServiceImpl implements ProductoService {
             }
         }
 
+        // 🔹 Por defecto, solo productos activos (estado_registro = 1)
+        Integer estadoFiltro = (estadoRegistro == null) ? 1 : estadoRegistro;
+
         List<Producto> productos = productoRepository.buscarParaAuditoria(
                 patronNombre,
                 idCategoriaProducto,
                 bloque,
                 visible,
-                estadoRegistro
+                estadoFiltro
         );
 
         return productos.stream()

@@ -214,6 +214,25 @@ public class CuotaServiceImpl implements CuotaService {
         return pageCuotas.map(this::mapearCuotaAResponse);
     }
 
+    @Override
+    public List<CuotaResponseDto> listarCuotasAdmin(
+            String periodo,
+            String estado,
+            String bloque,
+            Integer idCategoriaStand
+    ) {
+        List<CuotaPago> cuotas = cuotaPagoRepository.buscarCuotasAdmin(
+                (periodo != null && !periodo.isBlank()) ? periodo : null,
+                (estado != null && !estado.isBlank()) ? estado : null,
+                (bloque != null && !bloque.isBlank()) ? bloque : null,
+                idCategoriaStand
+        );
+
+        return cuotas.stream()
+                .map(this::mapearCuotaAResponse)
+                .collect(Collectors.toList());
+    }
+
     // ============================================
     // 5) Mis cuotas (SOCIO)
     // ============================================
@@ -306,6 +325,20 @@ public class CuotaServiceImpl implements CuotaService {
         return dto;
     }
 
+    @Override
+    public List<CuotaResponseDto> listarUltimosPagos(int limit) {
+        // Página 0, tamaño = limit, ordenado por fechaPago DESC
+        Pageable pageable = PageRequest.of(0, limit);
+
+        Page<CuotaPago> page = cuotaPagoRepository
+                .findUltimosPagos(pageable);
+
+        return page.getContent()
+                .stream()
+                .map(this::mapearCuotaAResponse)
+                .collect(Collectors.toList());
+    }
+
     // ============================================
     // Mapper Entity -> DTO
     // ============================================
@@ -342,4 +375,5 @@ public class CuotaServiceImpl implements CuotaService {
 
         return dto;
     }
+
 }

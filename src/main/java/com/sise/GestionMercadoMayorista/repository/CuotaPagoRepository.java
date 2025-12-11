@@ -5,6 +5,7 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface CuotaPagoRepository extends JpaRepository<CuotaPago, Integer> {
@@ -67,4 +68,43 @@ public interface CuotaPagoRepository extends JpaRepository<CuotaPago, Integer> {
              AND c.periodo = :periodo
            """)
     List<CuotaPago> findByPeriodo(@Param("periodo") String periodo);
+
+    // 6) Todas las cuotas
+    @Query("""
+           SELECT c FROM CuotaPago c
+           JOIN c.stand s
+           WHERE c.estadoRegistro = 1
+             AND c.fechaPago IS NOT NULL
+           ORDER BY c.fechaPago DESC
+           """)
+    Page<CuotaPago> findUltimosPagos(Pageable pageable);
+
+    // 7) Todas las cuotas (admin) con filtros opcionales
+    @Query("""
+       SELECT c FROM CuotaPago c
+       JOIN c.stand s
+       LEFT JOIN s.categoriaStand cs
+       WHERE c.estadoRegistro = 1
+         AND (:periodo IS NULL OR c.periodo = :periodo)
+         AND (:estado IS NULL OR c.estado = :estado)
+         AND (:bloque IS NULL OR s.bloque = :bloque)
+         AND (:idCategoriaStand IS NULL OR cs.id = :idCategoriaStand)
+       """)
+    List<CuotaPago> buscarCuotasAdmin(
+            @Param("periodo") String periodo,
+            @Param("estado") String estado,
+            @Param("bloque") String bloque,
+            @Param("idCategoriaStand") Integer idCategoriaStand
+    );
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+       UPDATE CuotaPago c
+       SET c.estado = 'VENCIDO'
+       WHERE c.estadoRegistro = 1
+         AND c.estado IN ('PENDIENTE', 'PARCIAL')
+         AND c.fechaVencimiento IS NOT NULL
+         AND c.fechaVencimiento < :hoy
+       """)
+    int marcarVencidas(@Param("hoy") LocalDate hoy);
 }

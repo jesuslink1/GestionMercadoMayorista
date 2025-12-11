@@ -3,6 +3,7 @@ package com.sise.GestionMercadoMayorista.repository;
 import com.sise.GestionMercadoMayorista.entity.CredencialQr;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CredencialQrRepository extends JpaRepository<CredencialQr, Integer> {
@@ -15,4 +16,9 @@ public interface CredencialQrRepository extends JpaRepository<CredencialQr, Inte
 
     // Opcional: para invalidar la última credencial al generar una nueva
     Optional<CredencialQr> findFirstByIdUsuarioAndEstadoRegistroOrderByFechaEmisionDesc(Integer idUsuario, Integer estadoRegistro);
+
+    List<CredencialQr> findByIdUsuarioAndEstadoRegistroOrderByFechaEmisionDesc(
+            Integer idUsuario,
+            Integer estadoRegistro
+    );
 }

@@ -15,6 +15,7 @@ import com.sise.GestionMercadoMayorista.exception.RecursoNoEncontradoException;
 import com.sise.GestionMercadoMayorista.exception.ReglaNegocioException;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class CredencialQrServiceImpl implements CredencialQrService {
@@ -89,6 +90,18 @@ public class CredencialQrServiceImpl implements CredencialQrService {
                 ));
 
         return mapToResponse(credencial);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CredencialResponse> listarPorUsuario(Integer idUsuario) {
+
+        List<CredencialQr> lista = credencialQrRepository
+                .findByIdUsuarioAndEstadoRegistroOrderByFechaEmisionDesc(idUsuario, 1);
+
+        return lista.stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Override

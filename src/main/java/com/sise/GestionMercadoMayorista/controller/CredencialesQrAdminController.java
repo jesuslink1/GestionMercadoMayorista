@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/admin/credenciales-qr")
 @SecurityRequirement(name = "bearerAuth")
@@ -27,5 +29,13 @@ public class CredencialesQrAdminController {
 
         CredencialResponse response = credencialQrService.crearCredencial(request);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/usuario/{idUsuario}")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERVISOR')")
+    public ResponseEntity<List<CredencialResponse>> listarPorUsuario(
+            @PathVariable Integer idUsuario
+    ) {
+        return ResponseEntity.ok(credencialQrService.listarPorUsuario(idUsuario));
     }
 }

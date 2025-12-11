@@ -221,8 +221,12 @@ public class StandServiceImpl implements StandService {
 
         String estadoUpper = nuevoEstado.toUpperCase(Locale.ROOT);
 
-        if (!estadoUpper.equals("ABIERTO") && !estadoUpper.equals("CERRADO")) {
-            throw new ReglaNegocioException("Estado inválido. Valores permitidos: ABIERTO, CERRADO.");
+        if (!estadoUpper.equals("ABIERTO")
+                && !estadoUpper.equals("CERRADO")
+                && !estadoUpper.equals("CLAUSURADO")) {
+            throw new ReglaNegocioException(
+                    "Estado inválido. Valores permitidos: ABIERTO, CERRADO, CLAUSURADO."
+            );
         }
 
         stand.setEstado(estadoUpper);

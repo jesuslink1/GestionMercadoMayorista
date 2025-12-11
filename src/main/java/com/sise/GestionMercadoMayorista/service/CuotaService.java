@@ -20,4 +20,13 @@ public interface CuotaService {
     List<CuotaResponseDto> listarMorosos(String periodo, String bloque, Integer idCategoriaStand);
 
     IndicadoresCuotasDto obtenerIndicadoresSemaforo(String periodo);
+
+    List<CuotaResponseDto> listarUltimosPagos(int limit);
+
+    List<CuotaResponseDto> listarCuotasAdmin(
+            String periodo,
+            String estado,
+            String bloque,
+            Integer idCategoriaStand
+    );
 }

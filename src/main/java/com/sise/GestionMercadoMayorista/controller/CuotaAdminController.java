@@ -76,4 +76,33 @@ public class CuotaAdminController {
         IndicadoresCuotasDto dto = cuotaService.obtenerIndicadoresSemaforo(periodo);
         return ResponseEntity.ok(dto);
     }
+
+    @GetMapping("/ultimos-pagos")
+    public ResponseEntity<List<CuotaResponseDto>> listarUltimosPagos(
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        // Evitar valores raros
+        if (limit <= 0) {
+            limit = 5;
+        } else if (limit > 50) {
+            limit = 50; // máxima cantidad razonable
+        }
+
+        List<CuotaResponseDto> lista = cuotaService.listarUltimosPagos(limit);
+        return ResponseEntity.ok(lista);
+    }
+
+    // Listar todas las cuotas (no solo morosos) con filtros opcionales
+    @GetMapping
+    public ResponseEntity<List<CuotaResponseDto>> listarCuotasAdmin(
+            @RequestParam(required = false) String periodo,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String bloque,
+            @RequestParam(required = false) Integer idCategoriaStand
+    ) {
+        List<CuotaResponseDto> lista = cuotaService.listarCuotasAdmin(
+                periodo, estado, bloque, idCategoriaStand
+        );
+        return ResponseEntity.ok(lista);
+    }
 }

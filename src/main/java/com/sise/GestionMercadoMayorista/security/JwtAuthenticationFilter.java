@@ -1,5 +1,7 @@
 package com.sise.GestionMercadoMayorista.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,6 +33,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        String path = request.getServletPath();
+
+        // 1) NO aplicar JWT a /api/auth/** ni /api/public/**
+        if (path.startsWith("/api/auth") || path.startsWith("/api/public")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         // DEBUG opcional
@@ -43,9 +53,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7); // quitar "Bearer "
-        String username = jwtUtil.extractUsername(token); // email
+        String username = null;
 
-        System.out.println("JWT FILTER - Username from token: " + username);
+        try {
+            username = jwtUtil.extractUsername(token); // email
+            System.out.println("JWT FILTER - Username from token: " + username);
+        } catch (ExpiredJwtException ex) {
+            System.out.println("JWT FILTER - Token EXPIRADO: " + ex.getMessage());
+            // Dejamos username = null → no se setea autenticación
+        } catch (JwtException ex) {
+            System.out.println("JWT FILTER - Token INVALIDO: " + ex.getMessage());
+            // Dejamos username = null → no se setea autenticación
+        }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
