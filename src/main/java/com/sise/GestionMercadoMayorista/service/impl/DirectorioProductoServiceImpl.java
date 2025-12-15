@@ -1,3 +1,5 @@
+// com.sise.GestionMercadoMayorista.service.impl.DirectorioProductoServiceImpl
+
 package com.sise.GestionMercadoMayorista.service.impl;
 
 import com.sise.GestionMercadoMayorista.dto.producto.ProductoPublicResponseDto;
@@ -8,6 +10,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class DirectorioProductoServiceImpl implements DirectorioProductoService {
 
@@ -17,6 +22,7 @@ public class DirectorioProductoServiceImpl implements DirectorioProductoService 
         this.productoRepository = productoRepository;
     }
 
+    // ================== LISTADO / BÚSQUEDA ==================
     @Override
     public Page<ProductoPublicResponseDto> buscarProductos(
             String nombre,
@@ -24,26 +30,39 @@ public class DirectorioProductoServiceImpl implements DirectorioProductoService 
             String bloque,
             Pageable pageable
     ) {
-        String patronNombre = null;
-        if (nombre != null) {
-            nombre = nombre.trim();
-            if (!nombre.isEmpty()) {
-                // lo pasamos a minúsculas y le agregamos % para búsqueda parcial
-                patronNombre = "%" + nombre.toLowerCase() + "%";
-            }
-        }
+        String nombreFiltro = (nombre == null || nombre.isBlank())
+                ? null
+                : "%" + nombre.toLowerCase() + "%";
 
         Page<Producto> page = productoRepository.buscarPublico(
-                patronNombre,
+                nombreFiltro,
                 idCategoriaProducto,
                 bloque,
                 pageable
         );
 
-        return page.map(this::toPublicDto);
+        return page.map(this::mapToPublicDto);
     }
 
-    private ProductoPublicResponseDto toPublicDto(Producto p) {
+    // ================== DETALLE POR ID ==================
+    @Override
+    public ProductoPublicResponseDto obtenerProductoPorId(Integer id) {
+        return productoRepository.findById(id)
+                .map(this::mapToPublicDto)
+                .orElse(null);
+    }
+
+    // ================== LISTAR POR STAND (PÚBLICO) ==================
+    @Override
+    public List<ProductoPublicResponseDto> listarPorStandPublico(Integer idStand) {
+        return productoRepository.buscarPublicoPorStand(idStand)
+                .stream()
+                .map(this::mapToPublicDto)
+                .collect(Collectors.toList());
+    }
+
+    // ================== MAPPER ENTIDAD -> DTO PÚBLICO ==================
+    private ProductoPublicResponseDto mapToPublicDto(Producto p) {
         ProductoPublicResponseDto dto = new ProductoPublicResponseDto();
 
         dto.setIdProducto(p.getId());
@@ -56,12 +75,15 @@ public class DirectorioProductoServiceImpl implements DirectorioProductoService 
 
         // Datos del stand
         if (p.getStand() != null) {
+            dto.setIdStand(p.getStand().getId());
             dto.setNombreStand(p.getStand().getNombreComercial());
             dto.setBloque(p.getStand().getBloque());
             dto.setNumeroStand(p.getStand().getNumeroStand());
 
             if (p.getStand().getCategoriaStand() != null) {
-                dto.setCategoriaStand(p.getStand().getCategoriaStand().getNombre());
+                dto.setCategoriaStand(
+                        p.getStand().getCategoriaStand().getNombre()
+                );
             }
         }
 

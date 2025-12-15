@@ -1,5 +1,6 @@
 package com.sise.GestionMercadoMayorista.service.impl;
 
+import com.sise.GestionMercadoMayorista.dto.producto.ProductoPublicResponseDto;
 import com.sise.GestionMercadoMayorista.dto.producto.ProductoRequestDto;
 import com.sise.GestionMercadoMayorista.dto.producto.ProductoResponseDto;
 import com.sise.GestionMercadoMayorista.entity.CategoriaProducto;
@@ -11,13 +12,14 @@ import com.sise.GestionMercadoMayorista.repository.ProductoRepository;
 import com.sise.GestionMercadoMayorista.repository.StandRepository;
 import com.sise.GestionMercadoMayorista.service.ProductoService;
 import jakarta.persistence.EntityNotFoundException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ProductoServiceImpl implements ProductoService {
@@ -42,7 +44,7 @@ public class ProductoServiceImpl implements ProductoService {
     public ProductoResponseDto crearProductoEnMiStand(Integer idStand, ProductoRequestDto dto) {
         String email = obtenerEmailUsuarioActual();
 
-        // Verificar que el stand le pertenece al socio (consulta custom en StandRepository)
+        // Verificar que el stand le pertenece al socio
         Stand stand = standRepository
                 .findByIdAndPropietarioEmailAndEstadoRegistro(idStand, email, 1)
                 .orElseThrow(() -> new IllegalArgumentException("No tienes permisos sobre este stand."));
@@ -179,7 +181,7 @@ public class ProductoServiceImpl implements ProductoService {
             }
         }
 
-        // 🔹 Por defecto, solo productos activos (estado_registro = 1)
+        // Por defecto, solo productos activos (estado_registro = 1)
         Integer estadoFiltro = (estadoRegistro == null) ? 1 : estadoRegistro;
 
         List<Producto> productos = productoRepository.buscarParaAuditoria(
@@ -201,6 +203,11 @@ public class ProductoServiceImpl implements ProductoService {
                 .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado"));
 
         return mapearProductoAResponseDto(producto);
+    }
+
+    @Override
+    public List<ProductoPublicResponseDto> listarPorStandPublico(Integer idStand) {
+        return List.of();
     }
 
     // =====================================================
@@ -273,7 +280,7 @@ public class ProductoServiceImpl implements ProductoService {
 
         // Datos del stand
         if (producto.getStand() != null) {
-            dto.setIdStand(producto.getStand().getId()); // idem: cambia getId() si tu Stand usa otro nombre
+            dto.setIdStand(producto.getStand().getId());
             dto.setBloqueStand(producto.getStand().getBloque());
             dto.setNumeroStand(producto.getStand().getNumeroStand());
             dto.setNombreComercialStand(producto.getStand().getNombreComercial());

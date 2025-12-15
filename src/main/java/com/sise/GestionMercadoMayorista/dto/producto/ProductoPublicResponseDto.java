@@ -11,6 +11,9 @@ public class ProductoPublicResponseDto {
     private Boolean enOferta;
     private BigDecimal precioOferta;
 
+    // 👇 NUEVO: para saber a qué stand pertenece
+    private Integer idStand;
+
     private String nombreStand;
     private String bloque;
     private String numeroStand;
@@ -69,6 +72,14 @@ public class ProductoPublicResponseDto {
 
     public void setPrecioOferta(BigDecimal precioOferta) {
         this.precioOferta = precioOferta;
+    }
+
+    public Integer getIdStand() {
+        return idStand;
+    }
+
+    public void setIdStand(Integer idStand) {
+        this.idStand = idStand;
     }
 
     public String getNombreStand() {

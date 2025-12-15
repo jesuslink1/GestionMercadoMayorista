@@ -1,5 +1,6 @@
 package com.sise.GestionMercadoMayorista.service;
 
+import com.sise.GestionMercadoMayorista.dto.producto.ProductoPublicResponseDto;
 import com.sise.GestionMercadoMayorista.dto.producto.ProductoRequestDto;
 import com.sise.GestionMercadoMayorista.dto.producto.ProductoResponseDto;
 
@@ -35,4 +36,6 @@ public interface ProductoService {
      * Ver detalle de producto (ADMIN / SUPERVISOR).
      */
     ProductoResponseDto obtenerProductoPorId(Integer idProducto);
+
+    List<ProductoPublicResponseDto> listarPorStandPublico(Integer idStand);
 }

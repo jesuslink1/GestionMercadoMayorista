@@ -6,6 +6,8 @@ import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/public/productos")
 public class DirectorioProductoController {
@@ -16,6 +18,7 @@ public class DirectorioProductoController {
         this.directorioProductoService = directorioProductoService;
     }
 
+    // ===== LISTADO / BUSQUEDA =====
     @GetMapping("/buscar")
     public ResponseEntity<Page<ProductoPublicResponseDto>> buscarProductos(
             @RequestParam(required = false) String nombre,
@@ -26,8 +29,36 @@ public class DirectorioProductoController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ProductoPublicResponseDto> resultado =
-                directorioProductoService.buscarProductos(nombre, idCategoriaProducto, bloque, pageable);
+                directorioProductoService.buscarProductos(
+                        nombre,
+                        idCategoriaProducto,
+                        bloque,
+                        pageable
+                );
 
         return ResponseEntity.ok(resultado);
+    }
+
+    // ===== DETALLE POR ID (PARA VISTAPRODUCTO) =====
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductoPublicResponseDto> obtenerProductoPorId(
+            @PathVariable Integer id
+    ) {
+        ProductoPublicResponseDto dto = directorioProductoService.obtenerProductoPorId(id);
+
+        if (dto == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/por-stand/{idStand}")
+    public ResponseEntity<List<ProductoPublicResponseDto>> listarPorStand(
+            @PathVariable Integer idStand
+    ) {
+        List<ProductoPublicResponseDto> lista =
+                directorioProductoService.listarPorStandPublico(idStand);
+        return ResponseEntity.ok(lista);
     }
 }

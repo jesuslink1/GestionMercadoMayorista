@@ -23,7 +23,16 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
             @Param("idStand") Integer idStand,
             @Param("emailPropietario") String emailPropietario
     );
-
+    @Query("""
+        SELECT p FROM Producto p
+        JOIN p.stand s
+        WHERE p.estadoRegistro = 1
+          AND p.visibleDirectorio = true
+          AND s.id = :idStand
+        """)
+    List<Producto> buscarPublicoPorStand(
+            @Param("idStand") Integer idStand
+    );
     // --------- PÚBLICO (si lo usas) ---------
     @Query("""
             SELECT p FROM Producto p
