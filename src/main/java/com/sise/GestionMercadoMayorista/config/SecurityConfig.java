@@ -48,7 +48,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // ✅ ACTIVAMOS CORS USANDO EL BEAN corsConfigurationSource()
+                // ACTIVAMOS CORS USANDO EL BEAN corsConfigurationSource()
                 .cors(Customizer.withDefaults())
 
                 .csrf(AbstractHttpConfigurer::disable)
@@ -82,7 +82,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/stands/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR", "SOCIO")
 
+                        .requestMatchers("/api/v1/stands/mis-stands/**").hasRole("SOCIO")
+
                         // SOCIO ve su credencial QR
+                        .requestMatchers("/api/v1/socio/**").hasRole("SOCIO")
                         .requestMatchers("/api/v1/socio/credencial-qr/**")
                         .hasRole("SOCIO")
 
@@ -120,7 +123,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // 👇 Aquí ya está tu front en 5173
+        // front en 5173
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000"

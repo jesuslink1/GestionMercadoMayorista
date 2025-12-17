@@ -30,6 +30,15 @@ public class CategoriaProductoServiceImpl implements CategoriaProductoService {
     }
 
     @Override
+    public List<CategoriaProductoResponse> listarDisponiblesParaSocio() {
+        return categoriaProductoRepository
+                .findByEstadoRegistroAndEstado(1, true)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public CategoriaProductoResponse obtenerPorId(Integer id) {
         CategoriaProducto cat = categoriaProductoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Categoría de producto no encontrada"));

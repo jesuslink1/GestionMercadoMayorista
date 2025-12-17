@@ -9,6 +9,8 @@ public interface CategoriaProductoService {
 
     List<CategoriaProductoResponse> listarTodas();
 
+    List<CategoriaProductoResponse> listarDisponiblesParaSocio();
+
     CategoriaProductoResponse obtenerPorId(Integer id);
 
     CategoriaProductoResponse crear(CategoriaProductoRequest request);

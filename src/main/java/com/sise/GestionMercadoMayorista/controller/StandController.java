@@ -105,4 +105,17 @@ public class StandController {
         List<StandResponseDto> lista = standService.listarPorPropietario(idUsuario);
         return ResponseEntity.ok(lista);
     }
+
+    // SOCIO – Cambiar estado de SUS stands (solo ABIERTO/CERRADO)
+    @PatchMapping("/mis-stands/{id}/estado")
+    @PreAuthorize("hasRole('SOCIO')")
+    public ResponseEntity<Void> cambiarEstadoSocio(
+            @PathVariable Integer id,
+            @RequestBody CambiarEstadoStandRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Integer idUsuario = userDetails.getUsuario().getId();
+        standService.cambiarEstadoSocio(idUsuario, id, request.getEstado());
+        return ResponseEntity.noContent().build();
+    }
 }

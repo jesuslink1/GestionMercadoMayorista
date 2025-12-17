@@ -233,6 +233,53 @@ public class StandServiceImpl implements StandService {
         standRepository.save(stand);
     }
 
+    @Override
+    public void cambiarEstadoSocio(Integer idSocio, Integer idStand, String nuevoEstado) {
+
+        Stand stand = standRepository.findById(idStand)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException("Stand no encontrado con id: " + idStand));
+
+        // Validar eliminación lógica
+        if (stand.getEstadoRegistro() != null && stand.getEstadoRegistro() == 0) {
+            throw new ReglaNegocioException(
+                    "No se puede cambiar el estado de un stand eliminado");
+        }
+
+        // Validar propietario
+        if (stand.getPropietario() == null ||
+                !stand.getPropietario().getId().equals(idSocio)) {
+            throw new ReglaNegocioException(
+                    "No tienes permisos para modificar este stand");
+        }
+
+        // Si está clausurado, nadie (ni socio) puede tocarlo
+        String estadoActual = stand.getEstado() == null
+                ? ""
+                : stand.getEstado().toUpperCase(Locale.ROOT);
+
+        if ("CLAUSURADO".equals(estadoActual)) {
+            throw new ReglaNegocioException(
+                    "El stand está clausurado y no puede cambiar de estado");
+        }
+
+        // Validar nuevo estado
+        if (nuevoEstado == null || nuevoEstado.isBlank()) {
+            throw new ReglaNegocioException("El estado no puede ser vacío");
+        }
+
+        String estadoNuevo = nuevoEstado.toUpperCase(Locale.ROOT);
+
+        // Socio SOLO puede ABRIR o CERRAR
+        if (!estadoNuevo.equals("ABIERTO") && !estadoNuevo.equals("CERRADO")) {
+            throw new ReglaNegocioException(
+                    "Estado inválido. El socio solo puede usar ABIERTO o CERRADO");
+        }
+
+        stand.setEstado(estadoNuevo);
+        standRepository.save(stand);
+    }
+
     // Eliminación lógica
     @Override
     public void eliminarLogico(Integer id) {

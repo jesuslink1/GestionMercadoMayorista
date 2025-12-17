@@ -25,4 +25,6 @@ public interface StandService {
     void cambiarEstado(Integer id, String nuevoEstado);
 
     void eliminarLogico(Integer id);
+
+    void cambiarEstadoSocio(Integer idSocio, Integer idStand, String nuevoEstado);
 }

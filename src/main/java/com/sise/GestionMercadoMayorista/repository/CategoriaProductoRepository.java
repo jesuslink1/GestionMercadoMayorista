@@ -9,4 +9,6 @@ public interface CategoriaProductoRepository extends JpaRepository<CategoriaProd
 
     List<CategoriaProducto> findByEstadoRegistro(Integer estadoRegistro);
 
+    List<CategoriaProducto> findByEstadoRegistroAndEstado(Integer estadoRegistro, Boolean estado);
+
 }
