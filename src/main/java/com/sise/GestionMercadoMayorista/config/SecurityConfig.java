@@ -93,6 +93,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/credenciales/validar/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR")
 
+                        // CLIENTE (vecino) - todo lo /api/v1/cliente/**
+                        .requestMatchers("/api/v1/cliente/**").hasRole("CLIENTE")
+
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

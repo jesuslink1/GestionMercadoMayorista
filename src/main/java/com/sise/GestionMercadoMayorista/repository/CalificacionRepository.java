@@ -23,4 +23,11 @@ public interface CalificacionRepository extends JpaRepository<Calificacion, Inte
             Integer estadoRegistro,
             Pageable pageable
     );
+
+    Page<Calificacion> findByClienteIdAndEstadoRegistroOrderByFechaDesc(
+            Integer idCliente,
+            Integer estadoRegistro,
+            Pageable pageable
+    );
+
 }

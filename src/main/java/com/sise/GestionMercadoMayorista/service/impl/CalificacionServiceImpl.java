@@ -43,6 +43,18 @@ public class CalificacionServiceImpl implements CalificacionService {
         return usuarioRepository.findByEmail(auth.getName()).orElse(null);
     }
 
+    private Usuario getUsuarioActualObligatorio() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null || !auth.isAuthenticated()) {
+            throw new ReglaNegocioException("Debe iniciar sesión como cliente.");
+        }
+        if ("anonymousUser".equalsIgnoreCase(String.valueOf(auth.getPrincipal()))) {
+            throw new ReglaNegocioException("Debe iniciar sesión como cliente.");
+        }
+        return usuarioRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ReglaNegocioException("Usuario no encontrado."));
+    }
+
     @Override
     public CalificacionResponseDto registrarCalificacion(CalificacionCrearRequestDto dto) {
         if (dto.getIdStand() == null) {
@@ -120,6 +132,50 @@ public class CalificacionServiceImpl implements CalificacionService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Calificacion> pageCal = calificacionRepository
                 .findByStandIdAndEstadoRegistroOrderByFechaDesc(idStand, 1, pageable);
+
+        return pageCal.map(this::mapearAResponse);
+    }
+
+    @Override
+    public CalificacionResponseDto registrarCalificacionCliente(ClienteCalificacionCrearRequestDto dto) {
+
+        if (dto.getIdStand() == null) {
+            throw new ReglaNegocioException("Debe indicar el stand a calificar.");
+        }
+        if (dto.getPuntuacion() == null || dto.getPuntuacion() < 1 || dto.getPuntuacion() > 5) {
+            throw new ReglaNegocioException("La puntuación debe estar entre 1 y 5.");
+        }
+
+        Usuario cliente = getUsuarioActualObligatorio();
+
+        Stand stand = standRepository.findById(dto.getIdStand())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Stand no encontrado."));
+
+        if (stand.getEstadoRegistro() != null && stand.getEstadoRegistro() == 0) {
+            throw new ReglaNegocioException("No se pueden registrar calificaciones sobre un stand eliminado.");
+        }
+
+        Calificacion c = new Calificacion();
+        c.setStand(stand);
+        c.setPuntuacion(dto.getPuntuacion());
+        c.setComentario(dto.getComentario());
+        c.setFecha(LocalDateTime.now());
+        c.setEstadoRegistro(1);
+
+        c.setCliente(cliente);
+        c.setOrigen("REGISTRADO");
+
+        Calificacion guardada = calificacionRepository.save(c);
+        return mapearAResponse(guardada);
+    }
+
+    @Override
+    public Page<CalificacionResponseDto> listarMisCalificaciones(int page, int size) {
+        Usuario cliente = getUsuarioActualObligatorio();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Calificacion> pageCal = calificacionRepository
+                .findByClienteIdAndEstadoRegistroOrderByFechaDesc(cliente.getId(), 1, pageable);
 
         return pageCal.map(this::mapearAResponse);
     }
