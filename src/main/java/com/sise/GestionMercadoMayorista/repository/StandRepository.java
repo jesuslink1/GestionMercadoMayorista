@@ -45,4 +45,5 @@ public interface StandRepository extends JpaRepository<Stand, Integer> {
             Integer estadoRegistro,
             Integer id
     );
+
 }

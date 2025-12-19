@@ -5,65 +5,49 @@ public class StandMapaPublicDto {
     private Integer id;
 
     private String bloque;          // A, B, C, D...
-    private String numeroStand;     // A-01, B-05, etc.
+    private String numeroStand;     // 101, 102...
 
-    private String nombreComercial; // Si es null, mostramos "Disponible A-01"
+    private String nombreComercial; // Si es null, mostramos "Disponible 101"
     private String rubro;           // nombreCategoriaStand o "---"
 
     /**
-     * Estado pensado para el mapa:
-     *  - "OCUPADO"    => se pinta verde
-     *  - "DISPONIBLE" => se pinta gris/naranja según la leyenda
+     * Estado del backend: ABIERTO, CERRADO, CLAUSURADO o DISPONIBLE
      */
     private String estado;
+    private Integer idCategoriaStand;
+    private String nombreCategoriaStand;
+    private String categoriaColorHex;
+    private String categoriaIconoUrl;
 
     public StandMapaPublicDto() {}
 
-    public Integer getId() {
-        return id;
-    }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    public String getBloque() { return bloque; }
+    public void setBloque(String bloque) { this.bloque = bloque; }
 
-    public String getBloque() {
-        return bloque;
-    }
+    public String getNumeroStand() { return numeroStand; }
+    public void setNumeroStand(String numeroStand) { this.numeroStand = numeroStand; }
 
-    public void setBloque(String bloque) {
-        this.bloque = bloque;
-    }
+    public String getNombreComercial() { return nombreComercial; }
+    public void setNombreComercial(String nombreComercial) { this.nombreComercial = nombreComercial; }
 
-    public String getNumeroStand() {
-        return numeroStand;
-    }
+    public String getRubro() { return rubro; }
+    public void setRubro(String rubro) { this.rubro = rubro; }
 
-    public void setNumeroStand(String numeroStand) {
-        this.numeroStand = numeroStand;
-    }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
-    public String getNombreComercial() {
-        return nombreComercial;
-    }
+    public Integer getIdCategoriaStand() { return idCategoriaStand; }
+    public void setIdCategoriaStand(Integer idCategoriaStand) { this.idCategoriaStand = idCategoriaStand; }
 
-    public void setNombreComercial(String nombreComercial) {
-        this.nombreComercial = nombreComercial;
-    }
+    public String getNombreCategoriaStand() { return nombreCategoriaStand; }
+    public void setNombreCategoriaStand(String nombreCategoriaStand) { this.nombreCategoriaStand = nombreCategoriaStand; }
 
-    public String getRubro() {
-        return rubro;
-    }
+    public String getCategoriaColorHex() { return categoriaColorHex; }
+    public void setCategoriaColorHex(String categoriaColorHex) { this.categoriaColorHex = categoriaColorHex; }
 
-    public void setRubro(String rubro) {
-        this.rubro = rubro;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
+    public String getCategoriaIconoUrl() { return categoriaIconoUrl; }
+    public void setCategoriaIconoUrl(String categoriaIconoUrl) { this.categoriaIconoUrl = categoriaIconoUrl; }
 }
