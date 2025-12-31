@@ -48,9 +48,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // ACTIVAMOS CORS USANDO EL BEAN corsConfigurationSource()
                 .cors(Customizer.withDefaults())
-
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(e -> e
@@ -58,6 +56,10 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
+
+                        // =========================
+                        // PUBLICOS
+                        // =========================
                         .requestMatchers(
                                 "/api/v1/ping",
                                 "/api/auth/login",
@@ -65,37 +67,51 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
-                        // SWAGGER / OPENAPI PÚBLICO
+                        // Swagger / OpenAPI
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/swagger.yaml"
-
                         ).permitAll()
 
-                        // Zona ADMIN ya existente
+                        // Archivos estáticos (imágenes servidas desde /uploads)
+                        .requestMatchers("/media/**").permitAll()
+
+                        // =========================
+                        // UPLOAD DE ARCHIVOS
+                        // =========================
+
+                        .requestMatchers("/api/v1/files/**")
+                        .hasAnyRole("ADMIN", "SUPERVISOR", "SOCIO")
+
+                        // =========================
+                        // ZONAS POR ROL
+                        // =========================
+
+                        // Zona ADMIN
                         .requestMatchers("/api/v1/admin/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR")
 
-                        // Stands ya existente
+                        // Stands
+                        .requestMatchers("/api/v1/stands/mis-stands/**")
+                        .hasRole("SOCIO")
                         .requestMatchers("/api/v1/stands/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR", "SOCIO")
 
-                        .requestMatchers("/api/v1/stands/mis-stands/**").hasRole("SOCIO")
-
-                        // SOCIO ve su credencial QR
-                        .requestMatchers("/api/v1/socio/**").hasRole("SOCIO")
-                        .requestMatchers("/api/v1/socio/credencial-qr/**")
+                        // Zona SOCIO (incluye credencial QR)
+                        .requestMatchers("/api/v1/socio/**")
                         .hasRole("SOCIO")
 
-                        // Validación de QR (personal de seguridad / admin / supervisor)
+                        // Validación de QR (seguridad/admin/supervisor)
                         .requestMatchers("/api/v1/credenciales/validar/**")
                         .hasAnyRole("ADMIN", "SUPERVISOR")
 
-                        // CLIENTE (vecino) - todo lo /api/v1/cliente/**
-                        .requestMatchers("/api/v1/cliente/**").hasRole("CLIENTE")
+                        // Zona CLIENTE
+                        .requestMatchers("/api/v1/cliente/**")
+                        .hasRole("CLIENTE")
 
+                        // Resto autenticado
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -126,12 +142,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // front en 5173
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000"
         ));
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        // IMPORTANTE: para multipart también está bien Content-Type
         config.setAllowedHeaders(List.of("Authorization","Content-Type"));
         config.setAllowCredentials(true);
 

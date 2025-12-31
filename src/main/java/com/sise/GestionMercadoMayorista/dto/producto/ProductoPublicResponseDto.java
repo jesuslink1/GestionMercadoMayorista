@@ -11,7 +11,6 @@ public class ProductoPublicResponseDto {
     private Boolean enOferta;
     private BigDecimal precioOferta;
 
-    // 👇 NUEVO: para saber a qué stand pertenece
     private Integer idStand;
 
     private String nombreStand;
@@ -20,7 +19,7 @@ public class ProductoPublicResponseDto {
 
     private String categoriaStand;
     private String categoriaProducto;
-
+    private String descripcion;
     private String imagenUrl;
 
     public ProductoPublicResponseDto() {
@@ -128,5 +127,13 @@ public class ProductoPublicResponseDto {
 
     public void setImagenUrl(String imagenUrl) {
         this.imagenUrl = imagenUrl;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }

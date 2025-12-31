@@ -13,97 +13,55 @@ public class UsuarioResponseDto {
     private String rol;
     private String estado;
     private Integer estadoRegistro;
+
+    private String ruc;
+    private String razonSocial;
+    private String fotoUrl;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public UsuarioResponseDto() {
-    }
+    public UsuarioResponseDto() {}
 
-    public Integer getIdUsuario() {
-        return idUsuario;
-    }
+    public Integer getIdUsuario() { return idUsuario; }
+    public void setIdUsuario(Integer idUsuario) { this.idUsuario = idUsuario; }
 
-    public void setIdUsuario(Integer idUsuario) {
-        this.idUsuario = idUsuario;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getDni() { return dni; }
+    public void setDni(String dni) { this.dni = dni; }
 
-    public String getTelefono() {
-        return telefono;
-    }
+    public String getNombres() { return nombres; }
+    public void setNombres(String nombres) { this.nombres = nombres; }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
+    public String getApellidos() { return apellidos; }
+    public void setApellidos(String apellidos) { this.apellidos = apellidos; }
 
-    public String getDni() {
-        return dni;
-    }
+    public String getRol() { return rol; }
+    public void setRol(String rol) { this.rol = rol; }
 
-    public void setDni(String dni) {
-        this.dni = dni;
-    }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
-    public String getNombres() {
-        return nombres;
-    }
+    public Integer getEstadoRegistro() { return estadoRegistro; }
+    public void setEstadoRegistro(Integer estadoRegistro) { this.estadoRegistro = estadoRegistro; }
 
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
-    }
+    public String getRuc() { return ruc; }
+    public void setRuc(String ruc) { this.ruc = ruc; }
 
-    public String getApellidos() {
-        return apellidos;
-    }
+    public String getRazonSocial() { return razonSocial; }
+    public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
 
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
-    }
+    public String getFotoUrl() { return fotoUrl; }
+    public void setFotoUrl(String fotoUrl) { this.fotoUrl = fotoUrl; }
 
-    public String getRol() {
-        return rol;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public void setRol(String rol) {
-        this.rol = rol;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
-    public Integer getEstadoRegistro() {
-        return estadoRegistro;
-    }
-
-    public void setEstadoRegistro(Integer estadoRegistro) {
-        this.estadoRegistro = estadoRegistro;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

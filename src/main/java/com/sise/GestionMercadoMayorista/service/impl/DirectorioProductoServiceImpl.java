@@ -72,6 +72,8 @@ public class DirectorioProductoServiceImpl implements DirectorioProductoService 
         dto.setEnOferta(p.getEnOferta());
         dto.setPrecioOferta(p.getPrecioOferta());
         dto.setImagenUrl(p.getImagenUrl());
+        dto.setDescripcion(p.getDescripcion());
+
 
         // Datos del stand
         if (p.getStand() != null) {

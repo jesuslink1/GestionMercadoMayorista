@@ -108,7 +108,6 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
-        // OJO: NO tocamos email, password, rol, etc.
         if (request.getNombres() != null) {
             usuario.setNombres(request.getNombres());
         }
@@ -122,10 +121,24 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuario.setFotoUrl(request.getFotoUrl());
         }
 
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            if (request.getPassword().length() < 6) {
+                throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres");
+            }
+            usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        }
+
+        if (request.getRuc() != null) {
+            usuario.setRuc(request.getRuc());
+        }
+        if (request.getRazonSocial() != null) {
+            usuario.setRazonSocial(request.getRazonSocial());
+        }
+
         usuario.setUpdatedAt(LocalDateTime.now());
 
         Usuario guardado = usuarioRepository.save(usuario);
-        return usuarioMapper.toDto(guardado);
+        return mapToResponse(guardado); // ✅ importante: que devuelva todo
     }
 
     @Override
@@ -176,9 +189,12 @@ public class UsuarioServiceImpl implements UsuarioService {
         dto.setRol(usuario.getRol() != null ? usuario.getRol().getNombreRol() : null);
         dto.setEstado(usuario.getEstado());
         dto.setEstadoRegistro(usuario.getEstadoRegistro());
-        if (usuario.getCreatedAt() != null) {
-            dto.setCreatedAt(usuario.getCreatedAt());
-        }
+        dto.setRuc(usuario.getRuc());
+        dto.setRazonSocial(usuario.getRazonSocial());
+        dto.setFotoUrl(usuario.getFotoUrl());
+        dto.setCreatedAt(usuario.getCreatedAt());
+        dto.setUpdatedAt(usuario.getUpdatedAt());
+
         return dto;
     }
 
