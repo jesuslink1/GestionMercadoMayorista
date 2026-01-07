@@ -63,7 +63,7 @@ public class PublicStandController {
                 .collect(Collectors.toList());
     }
 
-    // 👇 NUEVO: detalle público de stand por ID
+    // stand por ID
     @GetMapping("/{id}")
     public ResponseEntity<StandResponseDto> obtenerStandPublico(@PathVariable Integer id) {
         // Usa tu servicio existente
