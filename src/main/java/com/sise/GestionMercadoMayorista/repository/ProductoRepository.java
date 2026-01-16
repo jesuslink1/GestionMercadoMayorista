@@ -2,6 +2,7 @@ package com.sise.GestionMercadoMayorista.repository;
 
 import com.sise.GestionMercadoMayorista.entity.Producto;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,23 +24,30 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
             @Param("idStand") Integer idStand,
             @Param("emailPropietario") String emailPropietario
     );
+
+    // --------- PÚBLICO (POR STAND) ---------
+    // se filtra también por estado del stand = ABIERTO
     @Query("""
         SELECT p FROM Producto p
         JOIN p.stand s
         WHERE p.estadoRegistro = 1
           AND p.visibleDirectorio = true
           AND s.id = :idStand
+          AND s.estado = 'ABIERTO'
         """)
     List<Producto> buscarPublicoPorStand(
             @Param("idStand") Integer idStand
     );
-    // --------- PÚBLICO (si lo usas) ---------
+
+    // --------- PÚBLICO (BUSCAR) ---------
+    // se filtra también por estado del stand = ABIERTO
     @Query("""
             SELECT p FROM Producto p
             JOIN p.stand s
             JOIN p.categoriaProducto cp
             WHERE p.estadoRegistro = 1
               AND p.visibleDirectorio = true
+              AND s.estado = 'ABIERTO'
               AND (:nombre IS NULL OR LOWER(p.nombre) LIKE :nombre)
               AND (:idCategoriaProducto IS NULL OR cp.id = :idCategoriaProducto)
               AND (:bloque IS NULL OR s.bloque = :bloque)
@@ -51,7 +59,19 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
             Pageable pageable
     );
 
+    // DETALLE PÚBLICO POR ID (para que /api/public/productos/{id} dé 404 si no corresponde)
+    @Query("""
+            SELECT p FROM Producto p
+            JOIN p.stand s
+            WHERE p.id = :id
+              AND p.estadoRegistro = 1
+              AND p.visibleDirectorio = true
+              AND s.estado = 'ABIERTO'
+            """)
+    Optional<Producto> buscarPublicoPorId(@Param("id") Integer id);
+
     // --------- AUDITORÍA ADMIN / SUPERVISOR ---------
+
     @Query("""
             SELECT p FROM Producto p
             JOIN p.stand s

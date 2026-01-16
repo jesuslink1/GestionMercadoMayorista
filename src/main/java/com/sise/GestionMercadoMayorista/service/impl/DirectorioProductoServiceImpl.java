@@ -47,7 +47,7 @@ public class DirectorioProductoServiceImpl implements DirectorioProductoService 
     // ================== DETALLE POR ID ==================
     @Override
     public ProductoPublicResponseDto obtenerProductoPorId(Integer id) {
-        return productoRepository.findById(id)
+        return productoRepository.buscarPublicoPorId(id)
                 .map(this::mapToPublicDto)
                 .orElse(null);
     }
