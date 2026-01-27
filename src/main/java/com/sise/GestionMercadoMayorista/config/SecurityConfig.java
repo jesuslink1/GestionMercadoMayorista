@@ -62,7 +62,7 @@ public class SecurityConfig {
                         // =========================
                         .requestMatchers(
                                 "/api/v1/ping",
-                                "/api/auth/login",
+                                "/api/auth/**",
                                 "/api/public/**",
                                 "/error"
                         ).permitAll()
